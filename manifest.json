@@ -33,5 +33,7 @@
 
   "background": {
     "page": "html/background.html"
-  }
+  },
+
+  "update_url": "http://github.akshayjoshi.com/sugarcrm_github/updates.xml"
 }
