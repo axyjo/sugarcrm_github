@@ -3,7 +3,7 @@
 
   "name": "Github+Sugar",
   "description": "This extension ties together internal processes within Sugar with Github.",
-  "version": "1.0",
+  "version": "1.1",
 
   "permissions": [
     "https://*.github.com/",

@@ -37,6 +37,9 @@ GHSugarApi = {
                     var o = e.name_value_list;
                     self.setKey(o.bug_number.value, o.id.value);
                 });
+                setTimeout(function() {
+                    window.location.href = window.location.href;
+                }, 4500);
             };
 
             this.request('get_entry_list', data, callback);
@@ -52,39 +55,37 @@ GHSugarApi = {
         return false;
     },
 
-    login: function() {
+    login: function(cb) {
         var self = this;
         var callback = function(obj) {
             if(obj.number == 10) {
                 console.error("Bad login provided for Sugar Internal");
                 return;
             }
+            //console.log(obj);
             self.setToken(obj.id);
             self.logged_in = true;
-        };
-
-        self.request('get_user_id', [], function(obj) {
-            if(obj.number == 11) {
-                chrome.extension.sendMessage({method: "getKey", key: "si_username"}, function(user) {
-                    chrome.extension.sendMessage({method: "getKey", key: "si_password"}, function(pw) {
-                        var data = {
-                            'user_auth': {
-                                'user_name': user.data,
-                                'password': pw.data
-                            }
-                        };
-                        self.request('login', data, callback);
-                    });
-                });
-            } else {
-                self.logged_in = true;
+            if(cb) {
+                cb();
             }
+        };
+        chrome.extension.sendMessage({method: "getKey", key: "si_username"}, function(user) {
+            chrome.extension.sendMessage({method: "getKey", key: "si_password"}, function(pw) {
+                var data = {
+                    'user_auth': {
+                        'user_name': user.data,
+                        'password': pw.data
+                    }
+                };
+                self.request('login', data, callback);
+            });
         });
-
     },
 
     request: function(method, data, callback) {
+        var self = this;
         var c = function() {
+            console.log("3", data, method);
             var url = "https://sugarinternal.sugarondemand.com/service/v2/rest.php?input_type=JSON&response_type=JSON";
             $.ajax(url + "&method=" + method + "&rest_data=" + JSON.stringify(data), {
                 success: callback,
@@ -94,8 +95,23 @@ GHSugarApi = {
         };
         if(method !== "login") {
             chrome.extension.sendMessage({method: "getKey", key: "si_token"}, function(token) {
-                if(token.data) {
-                    data.unshift(token.data);
+                if(!token || !token.data) {
+                    self.login(c);
+                }
+                if(token.data && method !== 'get_user_id') {
+                    self.request('get_user_id', [token.data], function(obj) {
+                        if(obj.number == 11) {
+                            self.login(c);
+                        } else {
+                            self.logged_in = true;
+                            //console.log("1", data, method);
+                            data.unshift(token.data);
+                            //console.log("2", data, method);
+                            c();
+                        }
+                    });
+                } else if(token.data) {
+                    //console.log("4", data, method);
                     c();
                 }
             });
@@ -106,7 +122,7 @@ GHSugarApi = {
 
     setToken: function(token) {
         this.token = token;
-        chrome.extension.sendRequest({method: "setKey", key: "si_token", value: token});
+        chrome.extension.sendMessage({method: "setKey", key: "si_token", value: token});
     },
 
     getCache: function() {
