@@ -1,0 +1,37 @@
+{
+  "manifest_version": 2,
+
+  "name": "Github+Sugar",
+  "description": "This extension ties together internal processes within Sugar with Github.",
+  "version": "1.0",
+
+  "permissions": [
+    "https://*.github.com/",
+    "https://sugarinternal.sugarondemand.com/*"
+  ],
+
+  "options_page": "html/options.html",
+
+  "content_scripts": [
+    {
+      "matches": ["*://github.com/*/pulls*", "*://*.github.com/*/pulls*"],
+      "js": [
+        "js/lib/jquery.min.js",
+        "js/src/sugarapi.js",
+        "js/src/parser.js",
+        "js/src/pull_list.js"
+      ]
+    },
+    {
+      "matches": ["*://github.com/*/pull/*", "*://*.github.com/*/pull/*", "*://github.com/*/commit/*", "*://*.github.com/*/commit/*"],
+      "js": [
+        "js/lib/jquery.min.js",
+        "js/src/commit.js"
+      ]
+    }
+  ],
+
+  "background": {
+    "page": "html/background.html"
+  }
+}
